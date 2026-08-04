@@ -2,7 +2,8 @@ package antfarm
 
 type Room struct{
 	Name  string
-	X, Y  int
+	X  int
+	Y  int
 	IsStart  bool
 	IsEnd    bool
 }
