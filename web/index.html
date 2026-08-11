@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lem-in Colony Visualizer (Go Backend Powered)</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="brand-title">Lem-in Visualizer</span>
+      <span class="badge">Go Backend</span>
+    </div>
+    
+    <div class="header-controls">
+      <select id="map-select" class="btn">
+        <option value="">Loading maps from Go backend...</option>
+      </select>
+      <button id="btn-reset-view" class="btn">Reset View</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="canvas-container">
+      <canvas id="stage"></canvas>
+
+      <div class="hud-panel stats-hud">
+        <div class="stat-box">
+          <span class="stat-label">Total Ants</span>
+          <span id="stat-total-ants" class="stat-value">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">In Colony</span>
+          <span id="stat-active-ants" class="stat-value">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">At End</span>
+          <span id="stat-completed-ants" class="stat-value">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Turn</span>
+          <span id="stat-turn" class="stat-value">0 / 0</span>
+        </div>
+      </div>
+
+      <div class="hud-panel playback-hud">
+        <div class="playback-btns">
+          <button id="btn-prev" class="btn">◀</button>
+          <button id="btn-play" class="play-btn">▶</button>
+          <button id="btn-next" class="btn">▶</button>
+        </div>
+
+        <div class="scrubber-container">
+          <div id="progress-bar" class="progress-bar-wrap">
+            <div id="progress-fill" class="progress-bar-fill"></div>
+          </div>
+        </div>
+
+        <div class="speed-control">
+          <span>Speed:</span>
+          <input type="range" id="speed-slider" min="100" max="1500" step="50" value="600">
+          <span id="speed-val">0.6s</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/js/visualizer.js"></script>
+</body>
+</html>

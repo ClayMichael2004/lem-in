@@ -124,7 +124,7 @@ go run ./cmd/lem-in testdata/example00.txt
 
 ---
 
-### 3. Run `visualizer` (Piped Input)
+### 3. Run `visualizer` (Terminal Visualizer)
 
 **Linux / macOS:**
 ```bash
@@ -143,7 +143,19 @@ go run ./cmd/lem-in testdata/example00.txt | go run ./cmd/visualizer
 
 ---
 
-### 4. Run Unit Tests
+### 4. Interactive Web Visualizer (HTML / CSS / JS)
+
+You can launch the web UI directly:
+* Double-click [`visualizer.html`](file:///C:/Users/Clay/lem-in/visualizer.html) to open in your browser.
+* Or run via Go server:
+```bash
+go run ./cmd/web-visualizer
+# Open http://localhost:8080
+```
+
+---
+
+### 5. Run Unit Tests
 ```bash
 go test -v ./pkg/...
 ```
