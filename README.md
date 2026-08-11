@@ -25,7 +25,7 @@ A modular Go-based pathfinding and simulation engine implementing advanced graph
 - **Robust Parser (`pkg/parser`)**: Ingests and validates colony configurations, rooms, tunnels, and ant populations from input streams and test data.
 - **Advanced Graph Solver (`pkg/solver`)**: Implements Suurballe's algorithm (`suurballe.go`) alongside simulation logic (`simulation.go`) to find optimal disjoint paths for maximum throughput.
 - **Ant Colony Management (`pkg/antfarm`)**: Encapsulates the state and structural rules of the ant farm ecosystem.
-- **Visualizer (`cmd/visualizer`, `pkg/visualizer`)**: Renders graphical or structural representations of the simulation steps.
+- **Web Visualizer (`cmd/web-visualizer`, `web/`)**: Go backend API server rendering an interactive, colorblind-friendly canvas visualization.
 - **Comprehensive Test Suite**: Includes dedicated unit and integration tests across all core packages alongside real-world and edge-case test datasets (`testdata/`).
 
 ---
@@ -35,9 +35,11 @@ A modular Go-based pathfinding and simulation engine implementing advanced graph
 ```text
 lem-in/
 ├── cmd/
-│   ├── lem-in/
+│   ├── lem-in/            # Core CLI application entrypoint
 │   │   └── main.go
-│   └── visualizer/
+│   ├── visualizer/        # Terminal visualizer entrypoint
+│   │   └── main.go
+│   └── web-visualizer/    # Go HTTP web visualizer server
 │       └── main.go
 ├── pkg/
 │   ├── antfarm/
@@ -53,20 +55,16 @@ lem-in/
 │   └── visualizer/
 │       ├── visualizer.go
 │       └── visualizer_test.go
-├── testdata/
-│   ├── badexample00.txt
-│   ├── badexample01.txt
-│   ├── example00.txt
-│   ├── example01.txt
-│   ├── example02.txt
-│   ├── example03.txt
-│   ├── example04.txt
-│   ├── example05.txt
-│   ├── example06.txt
-│   └── example07.txt
+├── web/                   # Web interface templates and static assets
+│   ├── index.html
+│   └── static/
+│       ├── css/style.css
+│       └── js/visualizer.js
+├── testdata/              # Benchmark and bad input test datasets
+├── documentation.md       # Comprehensive technical documentation
 ├── go.mod
-├── lem-in (binary)
-└── visualizer (binary)
+├── lem-in.exe
+└── visualizer.exe
 ```
 
 ---
@@ -143,15 +141,13 @@ go run ./cmd/lem-in testdata/example00.txt | go run ./cmd/visualizer
 
 ---
 
-### 4. Interactive Web Visualizer (HTML / CSS / JS)
+### 4. Interactive Web Visualizer (Go Backend Powered)
 
-You can launch the web UI directly:
-* Double-click [`visualizer.html`](file:///C:/Users/Clay/lem-in/visualizer.html) to open in your browser.
-* Or run via Go server:
+Run via Go HTTP server:
 ```bash
 go run ./cmd/web-visualizer
-# Open http://localhost:8080
 ```
+Open **`http://localhost:8080`** in your browser.
 
 ---
 
@@ -206,8 +202,9 @@ This project is distributed under standard licensing terms as defined in the rep
 
 ## Authors
 
-- Your Name <you@example.com> — primary maintainer (replace with real name/email)
-- Contributors: add names and contacts in a future PR
+- Primary Maintainers & Contributors
+
+---
 
 ## How the program works (high-level)
 
@@ -228,14 +225,21 @@ This project is distributed under standard licensing terms as defined in the rep
 
 5. Output: `cmd/lem-in/main.go` prints the original `RawInput` and then each line returned by `DispatchAndSimulate`. Consumers (or the visualizer) can pipe this output for rendering.
 
-6. Visualizer: `cmd/visualizer/main.go` calls `pkg/visualizer.RunVisualizer`, which can read the original input + movement lines (from stdin) and render simple terminal frames showing ants moving between rooms.
+6. Visualizer: `cmd/visualizer/main.go` calls `pkg/visualizer.RunVisualizer`, which reads the output from stdin and renders terminal frames showing ants moving between rooms.
+
+7. Web Visualizer: `cmd/web-visualizer/main.go` hosts a HTTP web server serving static assets (`web/`) and providing REST endpoints (`/api/maps`, `/api/simulate`) powered directly by the Go parser and solver.
+
+---
 
 ## Files of interest
 
 - [cmd/lem-in/main.go](cmd/lem-in/main.go) — CLI entrypoint for parsing and running the simulation
-- [cmd/visualizer/main.go](cmd/visualizer/main.go) — visualizer CLI entrypoint
+- [cmd/visualizer/main.go](cmd/visualizer/main.go) — terminal visualizer CLI entrypoint
+- [cmd/web-visualizer/main.go](cmd/web-visualizer/main.go) — web visualizer Go HTTP server entrypoint
 - [pkg/antfarm/farm.go](pkg/antfarm/farm.go) — core domain types (`Farm`, `Room`, `Path`)
 - [pkg/parser/parser.go](pkg/parser/parser.go) — input parsing and validation
 - [pkg/solver/suurballe.go](pkg/solver/suurballe.go) — flow graph and path-finding (`FindOptimalPaths`)
 - [pkg/solver/simulation.go](pkg/solver/simulation.go) — ant dispatch and simulation (`DispatchAndSimulate`)
 - [pkg/visualizer/visualizer.go](pkg/visualizer/visualizer.go) — terminal visualizer rendering (`RunVisualizer`)
+- [documentation.md](documentation.md) — comprehensive technical documentation and walkthroughs
+
