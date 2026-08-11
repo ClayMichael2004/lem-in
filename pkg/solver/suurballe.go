@@ -47,24 +47,30 @@ func CalculateTurns(paths []antfarm.Path, totalAnts int) int {
 		return math.MaxInt32
 	}
 
-	maxPathLen := 0
-	for _, p := range paths {
-		if len(p) > maxPathLen {
-			maxPathLen = len(p)
+	antsPerPath := make([]int, len(paths))
+	for ant := 0; ant < totalAnts; ant++ {
+		bestPath := 0
+		minCost := len(paths[0]) + antsPerPath[0]
+		for i := 1; i < len(paths); i++ {
+			cost := len(paths[i]) + antsPerPath[i]
+			if cost < minCost {
+				minCost = cost
+				bestPath = i
+			}
+		}
+		antsPerPath[bestPath]++
+	}
+
+	maxTurns := 0
+	for i, p := range paths {
+		if antsPerPath[i] > 0 {
+			turns := len(p) + antsPerPath[i] - 1
+			if turns > maxTurns {
+				maxTurns = turns
+			}
 		}
 	}
-
-	sumDiffs := 0
-	for _, p := range paths {
-		sumDiffs += (maxPathLen - len(p))
-	}
-
-	remainingAnts := totalAnts - sumDiffs
-	if remainingAnts <= 0 {
-		return maxPathLen
-	}
-
-	return maxPathLen + int(math.Ceil(float64(remainingAnts)/float64(len(paths)))) - 1
+	return maxTurns
 }
 
 type flowGraph struct {
@@ -192,8 +198,8 @@ func (fg *flowGraph) extractDisjointPaths(start, end string) []antfarm.Path {
 				break
 			}
 
-			for neighbor, f := range flowCopy[curr] {
-				if f > 0 && !visited[neighbor] {
+			for _, neighbor := range fg.adj[curr] {
+				if flowCopy[curr][neighbor] > 0 && !visited[neighbor] {
 					visited[neighbor] = true
 					parent[neighbor] = curr
 					queue = append(queue, neighbor)

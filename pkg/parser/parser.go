@@ -1,7 +1,7 @@
 //validates all constraints
-//positive and count, unique room names and coordinates
-//room number must not start with L or # and must contain  no space.
-//stricly validates ##start and ##end directives
+//positive ant count, unique room names and coordinates
+//room name must not start with L or # and must contain no spaces.
+//strictly validates ##start and ##end directives
 //ignore #... while validating standard tunnels.
 
 package parser
@@ -14,62 +14,71 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
 	"lem-in/pkg/antfarm"
 )
 
-//parses a filepath and returns a Farm or a descriptive error
-func ParseFile(filePath string) (*antfarm.Farm, error){
-	file, error:= os.Open(filePath)
-	if error!=nil{
-		return nil, fmt.Errorf("ERROR: invalid data format, cannot open file: %w", error)
+// ParseFile parses a filepath and returns a Farm or a descriptive error
+func ParseFile(filePath string) (*antfarm.Farm, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("ERROR: invalid data format, cannot open file: %w", err)
 	}
 	defer file.Close()
 	return ParseReader(file)
 }
 
-func ParseReader(r io.Reader) (*antfarm.Farm, error){
-	scanner:= bufio.NewScanner(r)
-	farm:= antfarm.NewFarm()
+func ParseReader(r io.Reader) (*antfarm.Farm, error) {
+	scanner := bufio.NewScanner(r)
+	farm := antfarm.NewFarm()
 
-	var(
-		rawLines  []string
-		antsParsed bool
-		nextIsStart bool
-		nextIsEnd   bool
-		coordsSeen  = make(map[string]bool)
-		readingLinks  bool
+	var (
+		rawLines     []string
+		antsParsed   bool
+		nextIsStart  bool
+		nextIsEnd    bool
+		coordsSeen   = make(map[string]bool)
+		readingLinks bool
+		linkSeen     = make(map[string]bool)
 	)
 
-	for scanner.Scan(){
-		line:= scanner.Text()
+	for scanner.Scan() {
+		line := scanner.Text()
 		rawLines = append(rawLines, line)
-		trimmed:= strings.TrimSpace(line)
+		trimmed := strings.TrimSpace(line)
 
-		//ignore empty lines
-		if trimmed==""{
+		// ignore empty lines
+		if trimmed == "" {
 			continue
 		}
 
-		//handle comments and commands
-		if strings.HasPrefix(trimmed, "#"){
-			if trimmed == "##start"{
-				if farm.Start !=nil{
+		// handle comments and commands
+		if strings.HasPrefix(trimmed, "#") {
+			if trimmed == "##start" {
+				if farm.Start != nil || nextIsStart {
 					return nil, errors.New("ERROR: invalid data format, multiple ##start commands")
 				}
-				nextIsStart=true
-			}else if trimmed=="##end"{
-				if farm.End !=nil{
+				if nextIsEnd {
+					return nil, errors.New("ERROR: invalid data format, ##start immediately after ##end")
+				}
+				nextIsStart = true
+			} else if trimmed == "##end" {
+				if farm.End != nil || nextIsEnd {
 					return nil, errors.New("ERROR: invalid data format, multiple ##end commands")
 				}
-				nextIsEnd=true
+				if nextIsStart {
+					return nil, errors.New("ERROR: invalid data format, ##end immediately after ##start")
+				}
+				nextIsEnd = true
 			}
-			//other commenst beginning with # are ignored
+			// other comments beginning with # are ignored
 			continue
 		}
-		//parsing the number of ants
-		if !antsParsed{
-			ants, err:= strconv.Atoi(trimmed)
-			if err != nil || ants <=0{
+
+		// parsing the number of ants
+		if !antsParsed {
+			ants, err := strconv.Atoi(trimmed)
+			if err != nil || ants <= 0 {
 				return nil, errors.New("ERROR: invalid data format, invalid number of ants")
 			}
 			farm.Ants = ants
@@ -77,85 +86,123 @@ func ParseReader(r io.Reader) (*antfarm.Farm, error){
 			continue
 		}
 
-		//detect if we moved from rooms to links or viceversa
-		if strings.Contains(trimmed, "-"){
-			readingLinks=true
-		}
-		if !readingLinks{
-			//parse room : name x y
-			parts:= strings.Fields(trimmed)
-			if len(parts)!=3{
-				return nil, errors.New("ERROR: invalid data format, room definition format")
+		fields := strings.Fields(trimmed)
+		isRoomLine := len(fields) == 3
+		isLinkLine := strings.Contains(trimmed, "-") && len(fields) == 1
+
+		if isRoomLine {
+			if readingLinks {
+				return nil, errors.New("ERROR: invalid data format, room definition after links")
 			}
 
-			roomName:= parts[0]
-			if strings.HasPrefix(roomName, "L") || strings.HasPrefix(roomName, "#"){
+			roomName := fields[0]
+			if strings.HasPrefix(roomName, "L") || strings.HasPrefix(roomName, "#") {
 				return nil, errors.New("ERROR: invalid data format, room name cannot start with a # or L")
 			}
-			if _, exists:= farm.Rooms[roomName]; exists{
+			if _, exists := farm.Rooms[roomName]; exists {
 				return nil, errors.New("ERROR: invalid data format, duplicate room name")
 			}
 
-			x, errX:= strconv.Atoi(parts[1])
-			y, errY:= strconv.Atoi(parts[2])
-			if errX!= nil || errY!=nil{
+			x, errX := strconv.Atoi(fields[1])
+			y, errY := strconv.Atoi(fields[2])
+			if errX != nil || errY != nil {
 				return nil, errors.New("ERROR: invalid data format, room coordinates must be integers")
 			}
 
-			coordKey:= fmt.Sprintf("%d, %d", x ,y)
-			if coordsSeen[coordKey]{
-				return nil, errors.New("ERROR: invalid data format, duplicate room cooordinates")
+			coordKey := fmt.Sprintf("%d,%d", x, y)
+			if coordsSeen[coordKey] {
+				return nil, errors.New("ERROR: invalid data format, duplicate room coordinates")
 			}
+			coordsSeen[coordKey] = true
 
-			coordsSeen[coordKey]=true
-
-			room:= &antfarm.Room{
-				Name:   roomName,
-				X:     x,
-				Y:     y,
+			room := &antfarm.Room{
+				Name:    roomName,
+				X:       x,
+				Y:       y,
 				IsStart: nextIsStart,
-				IsEnd: nextIsEnd,
+				IsEnd:   nextIsEnd,
 			}
 
-			if nextIsStart{
-				farm.Start=room
-				nextIsStart=false
+			if nextIsStart {
+				farm.Start = room
+				nextIsStart = false
 			}
-			if nextIsEnd{
-				farm.End=room
-				nextIsEnd=false
+			if nextIsEnd {
+				farm.End = room
+				nextIsEnd = false
 			}
 
 			farm.Rooms[roomName] = room
-		}else{
-			//parse tunnel/link room1-room2
-			parts:= strings.Split(trimmed, "-")
-			if len(parts)!=2{
-				return nil, errors.New("ERROR: invalid data format, invalid link/tunnel format")
+		} else if isLinkLine {
+			readingLinks = true
+
+			if nextIsStart || nextIsEnd {
+				return nil, errors.New("ERROR: invalid data format, ##start or ##end not followed by a room")
 			}
 
-			u, v:= parts[0], parts[1]
-			if u==v{
+			var u, v string
+			found := false
+
+			for i := 1; i < len(trimmed)-1; i++ {
+				if trimmed[i] == '-' {
+					candU := trimmed[:i]
+					candV := trimmed[i+1:]
+					if _, okU := farm.Rooms[candU]; okU {
+						if _, okV := farm.Rooms[candV]; okV {
+							u, v = candU, candV
+							found = true
+							break
+						}
+					}
+				}
+			}
+
+			if !found {
+				parts := strings.Split(trimmed, "-")
+				if len(parts) != 2 {
+					return nil, errors.New("ERROR: invalid data format, invalid link/tunnel format")
+				}
+				u, v = parts[0], parts[1]
+				if _, existsU := farm.Rooms[u]; !existsU {
+					return nil, errors.New("ERROR: invalid data format, tunnel links unknown room")
+				}
+				if _, existsV := farm.Rooms[v]; !existsV {
+					return nil, errors.New("ERROR: invalid data format, tunnel links unknown room")
+				}
+			}
+
+			if u == v {
 				return nil, errors.New("ERROR: invalid data format, self referencing tunnel")
 			}
-			if _, existsU:= farm.Rooms[u]; !existsU{
-				return nil, errors.New("ERROR: invalid data format, tunnel links unknown room")
+
+			linkKey1 := u + "-" + v
+			linkKey2 := v + "-" + u
+			if linkSeen[linkKey1] || linkSeen[linkKey2] {
+				return nil, errors.New("ERROR: invalid data format, duplicate tunnel")
 			}
-			if _, existsV:= farm.Rooms[v]; !existsV{
-				return nil, errors.New("ERROR: invalid data format, tunnel links unknown room")
-			}
+			linkSeen[linkKey1] = true
+			linkSeen[linkKey2] = true
+
 			farm.AddLink(u, v)
+		} else {
+			return nil, errors.New("ERROR: invalid data format, unrecognized line format")
 		}
 	}
 
-	if err:= scanner.Err(); err!=nil{
+	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("ERROR: invalid data format, scanner error: %w", err)
 	}
 
-	if farm.Start==nil || farm.End==nil{
+	if !antsParsed {
+		return nil, errors.New("ERROR: invalid data format, missing ant count")
+	}
+	if farm.Start == nil || farm.End == nil {
 		return nil, errors.New("ERROR: invalid data format, missing ##start and ##end room")
 	}
+	if nextIsStart || nextIsEnd {
+		return nil, errors.New("ERROR: invalid data format, ##start or ##end not followed by a room")
+	}
 
-	farm.RawInput=strings.Join(rawLines, "\n")
+	farm.RawInput = strings.Join(rawLines, "\n")
 	return farm, nil
-}
+}

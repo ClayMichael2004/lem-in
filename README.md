@@ -85,33 +85,90 @@ If a local configuration is needed, verify that your environment supports standa
 
 - Go (version 1.18 or higher recommended)
 
-### Setup Instructions
+---
 
-1. Navigate into the project directory:
-   ```bash
-   cd lem-in
-   ```
+## Auditor Quick Start (Copy & Paste)
 
-2. Build the main application and visualizer binaries:
-   ```bash
-   go build -o lem-in ./cmd/lem-in
-   go build -o visualizer ./cmd/visualizer
-   ```
+### 1. Build Binaries
 
-3. Run the main simulation engine against an example map:
-   ```bash
-   ./lem-in < testdata/example00.txt
-   ```
+**On Linux / macOS:**
+```bash
+go build -o lem-in ./cmd/lem-in
+go build -o visualizer ./cmd/visualizer
+```
+
+**On Windows (PowerShell / CMD):**
+```powershell
+go build -o lem-in.exe ./cmd/lem-in
+go build -o visualizer.exe ./cmd/visualizer
+```
 
 ---
 
-## Available Scripts & Commands
+### 2. Run `lem-in` Simulation
 
-Because no explicit script runner or package manager wrapper is defined outside of standard Go toolchains, use standard Go commands:
+**Linux / macOS:**
+```bash
+./lem-in testdata/example00.txt
+```
 
-- **Build Core Engine**: `go build -o lem-in ./cmd/lem-in`
-- **Build Visualizer**: `go build -o visualizer ./cmd/visualizer`
-- **Run Engine**: `./lem-in < [path-to-map-file]`
+**Windows (PowerShell):**
+```powershell
+./lem-in testdata/example00.txt
+```
+
+**Universal (Direct via `go run` on any OS):**
+```bash
+go run ./cmd/lem-in testdata/example00.txt
+```
+
+---
+
+### 3. Run `visualizer` (Piped Input)
+
+**Linux / macOS:**
+```bash
+./lem-in testdata/example00.txt | ./visualizer
+```
+
+**Windows (PowerShell):**
+```powershell
+./lem-in testdata/example00.txt | ./visualizer
+```
+
+**Universal (Direct via `go run` on any OS):**
+```bash
+go run ./cmd/lem-in testdata/example00.txt | go run ./cmd/visualizer
+```
+
+---
+
+### 4. Run Unit Tests
+```bash
+go test -v ./pkg/...
+```
+
+---
+
+## Usage Examples
+
+### Standard Test Cases
+```bash
+./lem-in testdata/example00.txt
+./lem-in testdata/example01.txt
+./lem-in testdata/example02.txt
+./lem-in testdata/example03.txt
+./lem-in testdata/example04.txt
+./lem-in testdata/example05.txt
+./lem-in testdata/example06.txt
+./lem-in testdata/example07.txt
+```
+
+### Error Testing (Invalid Formats)
+```bash
+./lem-in testdata/badexample00.txt
+./lem-in testdata/badexample01.txt
+```
 
 ---
 

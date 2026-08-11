@@ -8,12 +8,12 @@ import (
 func TestParseValidInput(t *testing.T) {
 	input := `3
 ##start
-start 0 0
+start 0 -5
 ##end
 end 1 1
-room1 0 1
-start-room1
-room1-end`
+room-1 0 1
+start-room-1
+room-1-end`
 
 	farm, err := ParseReader(strings.NewReader(input))
 	if err != nil {
@@ -38,6 +38,8 @@ func TestParseInvalidInputs(t *testing.T) {
 		{"Duplicate Room Names", "2\n##start\nA 0 0\nA 1 1\n##end\nB 2 2\nA-B"},
 		{"Duplicate Room Coordinates", "2\n##start\nA 0 0\nB 0 0\n##end\nC 2 2\nA-B\nB-C"},
 		{"Missing End", "2\n##start\nA 0 0\nB 1 1\nA-B"},
+		{"Duplicate Tunnels", "2\n##start\nA 0 0\n##end\nB 1 1\nA-B\nA-B"},
+		{"Start Not Followed By Room", "2\n##start\nA-B\n##end\nB 1 1"},
 	}
 
 	for _, tt := range tests {
